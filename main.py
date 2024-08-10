@@ -9,6 +9,7 @@ from fastapi.responses import JSONResponse, Response
 if not os.getenv("DB_URL"):
     load_dotenv()
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     async with asyncpg.create_pool(os.env["DB_URL"]) as app.pool:
@@ -16,6 +17,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
+
 
 @app.get("/")
 async def root():
