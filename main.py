@@ -2,7 +2,7 @@ from contextlib import asynccontextmanager
 import os
 
 from dotenv import load_dotenv
-from fastapi
+import fastapi
 import uvicorn
 from fastapi.responses import JSONResponse, Response
 
