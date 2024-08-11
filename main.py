@@ -24,5 +24,8 @@ async def root():
     return JSONResponse(content={"message": "welcome to melody api"})
 
 
+# so far so good.
+
+
 if __name__ == "__main__":
     uvicorn.run("main:app", port=2343, log_level="debug")
