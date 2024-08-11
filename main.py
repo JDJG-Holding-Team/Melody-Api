@@ -23,6 +23,7 @@ app = FastAPI(lifespan=lifespan)
 async def root():
     return JSONResponse(content={"message": "welcome to melody api"})
 
+
 # so far so good.
 
 
