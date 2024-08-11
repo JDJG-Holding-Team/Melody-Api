@@ -32,14 +32,15 @@ app = FastAPI(lifespan=lifespan)
 async def root():
     return JSONResponse(content={"message": "welcome to melody api"})
 
+
 @app.get("/music")
 async def music(number: typing.Optional[int] = 10):
     if number > 500:
-        return JSONResponse(content={error:"Too many Urls requested. Limit is 500"}, status_code=403)
+        return JSONResponse(content={error: "Too many Urls requested. Limit is 500"}, status_code=403)
 
     elif number <= 0:
-        return JSONResponse(content={error:"You need to grab at least one url"}, status_code=403)
-    
+        return JSONResponse(content={error: "You need to grab at least one url"}, status_code=403)
+
     # figure out how music it should give maybe make it give a different response for only one url grab.
     data = [dict(r) for r in await app.pool.fetch("SELECT * FROM MUSIC ORDER BY RANDOM() LIMIT $1", number)]
     return JSONResponse(content={"data": data})
