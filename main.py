@@ -10,6 +10,7 @@ from fastapi.responses import JSONResponse, Response
 if not os.getenv("DB_KEY"):
     load_dotenv()
 
+
 class CustomRecordClass(asyncpg.Record):
     def __getattr__(self, name: str) -> Any:
         if name in self.keys():
