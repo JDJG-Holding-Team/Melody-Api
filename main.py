@@ -32,12 +32,14 @@ app = FastAPI(lifespan=lifespan)
 async def root():
     return JSONResponse(content={"message": "welcome to melody api"})
 
+
 @app.get("/music")
 async def music(number: typing.Optional[int] = 5):
-    
+
     # figure out how music it should give maybe make it give a different response for only one url grab.
     data = [dict(r) for r in await app.pool.fetch("SELECT * FROM MUSIC ORDER BY RANDOM() LIMIT $1", number)]
     return JSONResponse(content={"data": data})
+
 
 # so far so good.
 
