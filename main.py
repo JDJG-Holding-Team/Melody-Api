@@ -1,9 +1,9 @@
-from contextlib import asynccontextmanager
 import os
+from contextlib import asynccontextmanager
 
-from dotenv import load_dotenv
 import fastapi
 import uvicorn
+from dotenv import load_dotenv
 from fastapi.responses import JSONResponse, Response
 
 if not os.getenv("DB_URL"):
