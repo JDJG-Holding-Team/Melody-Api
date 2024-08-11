@@ -20,7 +20,7 @@ class CustomRecordClass(asyncpg.Record):
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    async with asyncpg.create_pool(os.env["DB_KEY"], record_class=CustomRecordClass) as app.pool:
+    async with asyncpg.create_pool(os.environ["DB_KEY"], record_class=CustomRecordClass) as app.pool:
         yield
 
 
@@ -30,6 +30,11 @@ app = FastAPI(lifespan=lifespan)
 @app.get("/")
 async def root():
     return JSONResponse(content={"message": "welcome to melody api"})
+
+@app.get("/music")
+async def music():
+
+    return JSONResponse(content={"data": []]})
 
 
 # so far so good.
