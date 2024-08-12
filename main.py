@@ -69,7 +69,7 @@ async def services():
     return JSONResponse(content={"data": data})
 
 
-async def fetch_content(table_name: str, number: int, service: typing.Optional[str]):
+async def fetch_content(table_name: str, number: int, service: typing.Optional[str] = None):
     query = f"SELECT * FROM {table_name}"
     params = []
 
