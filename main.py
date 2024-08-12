@@ -79,6 +79,8 @@ async def fetch_content(table_name: str, number: int, service: typing.Optional[s
 
     query += " ORDER BY RANDOM() LIMIT $2"
     params.append(number)
+    print(query)
+    print(params)
 
     data = [dict(r) for r in await app.pool.fetch(query, *params)]
     if not data:
