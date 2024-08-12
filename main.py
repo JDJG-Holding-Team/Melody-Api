@@ -23,22 +23,7 @@ class CustomRecordClass(asyncpg.Record):
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     async with asyncpg.create_pool(os.environ["DB_KEY"], record_class=CustomRecordClass) as app.pool:
-        # Fetch all distinct services and create an Enum dynamically
-        service_types = set()
-        service_tables = ["music", "tech_videos", "anime_videos", "misc_videos", "to_watch", "watched_videos"]
-        for table in service_tables:
-            records = await app.pool.fetch(f"SELECT DISTINCT service FROM {table}")
-            service_types.update(record.service for record in records)
-
-        # Create the Enum dynamically
-        global ServiceEnum
-        ServiceEnum = Enum("ServiceEnum", {service: service for service in service_types})
-
         yield
-
-        # the enum should be created every request.
-        # as services should also not be cached (these can be changed at any time).
-
 
 app = FastAPI(lifespan=lifespan)
 
@@ -86,13 +71,13 @@ async def services():
     return JSONResponse(content={"data": data})
 
 
-async def fetch_content(table_name: str, number: int, service: typing.Optional[ServiceEnum]):
+async def fetch_content(table_name: str, number: int, service: typing.Optional[str]):
     query = f"SELECT * FROM {table_name}"
     params = []
 
     if service:
         query += " WHERE service = $1"
-        params.append(service.value)  # Use .value to get the actual string value from the Enum
+        params.append(service)
 
     query += " ORDER BY RANDOM() LIMIT $2"
     params.append(number)
@@ -106,7 +91,7 @@ async def fetch_content(table_name: str, number: int, service: typing.Optional[S
 @app.get("/music", response_model=typing.List[ContentResponse])
 @lru_cache()
 async def music_content(
-    number: typing.Optional[int] = Query(10, gt=0, le=500), service: typing.Optional[ServiceEnum] = None
+    number: typing.Optional[int] = Query(10, gt=0, le=500), service: typing.Optional[str] = None
 ):
     data = await fetch_content("music", number, service)
     return JSONResponse(content={"data": data})
@@ -115,7 +100,7 @@ async def music_content(
 @app.get("/tech", response_model=typing.List[ContentResponse])
 @lru_cache()
 async def tech_content(
-    number: typing.Optional[int] = Query(10, gt=0, le=500), service: typing.Optional[ServiceEnum] = None
+    number: typing.Optional[int] = Query(10, gt=0, le=500), service: typing.Optional[str] = None
 ):
     data = await fetch_content("tech_videos", number, service)
     return JSONResponse(content={"data": data})
@@ -124,7 +109,7 @@ async def tech_content(
 @app.get("/anime", response_model=typing.List[ContentResponse])
 @lru_cache()
 async def anime_content(
-    number: typing.Optional[int] = Query(10, gt=0, le=500), service: typing.Optional[ServiceEnum] = None
+    number: typing.Optional[int] = Query(10, gt=0, le=500), service: typing.Optional[str] = None
 ):
     data = await fetch_content("anime_videos", number, service)
     return JSONResponse(content={"data": data})
@@ -133,7 +118,7 @@ async def anime_content(
 @app.get("/misc", response_model=typing.List[ContentResponse])
 @lru_cache()
 async def misc_content(
-    number: typing.Optional[int] = Query(10, gt=0, le=500), service: typing.Optional[ServiceEnum] = None
+    number: typing.Optional[int] = Query(10, gt=0, le=500), service: typing.Optional[str] = None
 ):
     data = await fetch_content("misc_videos", number, service)
     return JSONResponse(content={"data": data})
@@ -142,7 +127,7 @@ async def misc_content(
 @app.get("/watch", response_model=typing.List[ContentResponse])
 @lru_cache()
 async def to_watch_content(
-    number: typing.Optional[int] = Query(10, gt=0, le=500), service: typing.Optional[ServiceEnum] = None
+    number: typing.Optional[int] = Query(10, gt=0, le=500), service: typing.Optional[str] = None
 ):
     data = await fetch_content("to_watch", number, service)
     return JSONResponse(content={"data": data})
@@ -151,7 +136,7 @@ async def to_watch_content(
 @app.get("/watched", response_model=typing.List[ContentResponse])
 @lru_cache()
 async def watched_content(
-    number: typing.Optional[int] = Query(10, gt=0, le=500), service: typing.Optional[ServiceEnum] = None
+    number: typing.Optional[int] = Query(10, gt=0, le=500), service: typing.Optional[str] = None
 ):
     data = await fetch_content("watched_videos", number, service)
     return JSONResponse(content={"data": data})
