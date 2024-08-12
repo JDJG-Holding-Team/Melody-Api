@@ -127,4 +127,4 @@ async def watched_content(number: typing.Optional[int] = Query(10, gt=0, le=500)
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run("main:app", port=2343, log_level="debug")
+    uvicorn.run("main:app", port=5000, log_level="debug")
