@@ -36,6 +36,9 @@ async def lifespan(app: FastAPI):
 
         yield
 
+        # the enum should be created every command.
+        # as services should also not be cached.
+
 
 app = FastAPI(lifespan=lifespan)
 
