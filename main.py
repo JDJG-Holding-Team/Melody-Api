@@ -3,6 +3,7 @@ from fastapi import FastAPI, Query, HTTPException
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 import os
+import enum
 import asyncpg
 from contextlib import asynccontextmanager
 from dotenv import load_dotenv
@@ -41,7 +42,15 @@ class ServiceListResponse(BaseModel):
     misc: typing.List[str]
     watch: typing.List[str]
     watched: typing.List[str]
+    any_video: typing.List[str]
 
+class ContentType(enum.IntEnum):
+    music = 0
+    tech = 1
+    anime = 2
+    misc = 3
+    watch = 4
+    watched = 5
 
 @app.get("/")
 async def root():
@@ -59,6 +68,11 @@ async def services():
     watched_services = [
         record.service for record in await app.pool.fetch("SELECT DISTINCT service FROM watched_videos")
     ]
+    # turn these to all use the new content table.
+
+    rows = await app.pool.fetch("SELECT DISTINCT service, content_type FROM CONTENT")
+    # do something with this
+    # pass the content_type type to ContentType's enum.
 
     data["music"] = music_services
     data["tech"] = tech_services
@@ -69,9 +83,11 @@ async def services():
     return JSONResponse(content={"data": data})
 
 
-async def fetch_content(table_name: str, number: int, service: typing.Optional[str] = None):
-    query = f"SELECT * FROM {table_name}"
+async def fetch_content(number: int, service: typing.Optional[str] = None, content_type : typing.Optional[ContentType] = None):
+    query = "SELECT * FROM CONTENT"
     params = []
+
+    # content_type.value gets used cause number
 
     if service:
         query += " WHERE service = $1"
@@ -91,25 +107,25 @@ async def fetch_content(table_name: str, number: int, service: typing.Optional[s
 
 @app.get("/music", response_model=typing.List[ContentResponse])
 async def music_content(number: typing.Optional[int] = Query(10, gt=0, le=500), service: typing.Optional[str] = None):
-    data = await fetch_content("music", number, service)
+    data = await fetch_content(number, service, ContentType.music)
     return JSONResponse(content={"data": data})
 
 
 @app.get("/tech", response_model=typing.List[ContentResponse])
 async def tech_content(number: typing.Optional[int] = Query(10, gt=0, le=500), service: typing.Optional[str] = None):
-    data = await fetch_content("tech_videos", number, service)
+    data = await fetch_content(number, service, ContentType.tech)
     return JSONResponse(content={"data": data})
 
 
 @app.get("/anime", response_model=typing.List[ContentResponse])
 async def anime_content(number: typing.Optional[int] = Query(10, gt=0, le=500), service: typing.Optional[str] = None):
-    data = await fetch_content("anime_videos", number, service)
+    data = await fetch_content(number, service, ContentType.anime)
     return JSONResponse(content={"data": data})
 
 
 @app.get("/misc", response_model=typing.List[ContentResponse])
 async def misc_content(number: typing.Optional[int] = Query(10, gt=0, le=500), service: typing.Optional[str] = None):
-    data = await fetch_content("misc_videos", number, service)
+    data = await fetch_content(number, service, ContentType.misc)
     return JSONResponse(content={"data": data})
 
 
@@ -117,13 +133,18 @@ async def misc_content(number: typing.Optional[int] = Query(10, gt=0, le=500), s
 async def to_watch_content(
     number: typing.Optional[int] = Query(10, gt=0, le=500), service: typing.Optional[str] = None
 ):
-    data = await fetch_content("to_watch", number, service)
+    data = await fetch_content(number, service, ContentType.watch)
     return JSONResponse(content={"data": data})
 
 
 @app.get("/watched", response_model=typing.List[ContentResponse])
 async def watched_content(number: typing.Optional[int] = Query(10, gt=0, le=500), service: typing.Optional[str] = None):
-    data = await fetch_content("watched_videos", number, service)
+    data = await fetch_content(number, service, ContentType.watched)
+    return JSONResponse(content={"data": data})
+
+@app.get("/any-video", response_model=typing.List[ContentResponse])
+async def any_video(number: typing.Optional[int] = Query(10, gt=0, le=500), service: typing.Optional[str] = None):
+    data = await fetch_content(number, service)
     return JSONResponse(content={"data": data})
 
 
