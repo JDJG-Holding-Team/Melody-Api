@@ -1,12 +1,11 @@
-import os
 import typing
-from contextlib import asynccontextmanager
-
-import asyncpg
-from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, Query, HTTPException
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
+import os
+import asyncpg
+from contextlib import asynccontextmanager
+from dotenv import load_dotenv
 
 if not os.getenv("DB_KEY"):
     load_dotenv()
