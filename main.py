@@ -1,11 +1,13 @@
+import enum
+import os
 import typing
-from fastapi import FastAPI, Query, HTTPException
+from contextlib import asynccontextmanager
+
+import asyncpg
+from dotenv import load_dotenv
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
-import os
-import asyncpg
-from contextlib import asynccontextmanager
-from dotenv import load_dotenv
 
 if not os.getenv("DB_KEY"):
     load_dotenv()
@@ -41,6 +43,16 @@ class ServiceListResponse(BaseModel):
     misc: typing.List[str]
     watch: typing.List[str]
     watched: typing.List[str]
+    any_video: typing.List[str]
+
+
+class ContentType(enum.IntEnum):
+    music = 0
+    tech = 1
+    anime = 2
+    misc = 3
+    watch = 4
+    watched = 5
 
 
 @app.get("/")
@@ -51,32 +63,32 @@ async def root():
 @app.get("/services", response_model=ServiceListResponse)
 async def services():
     data = {}
-    music_services = [record.service for record in await app.pool.fetch("SELECT DISTINCT service FROM music")]
-    tech_services = [record.service for record in await app.pool.fetch("SELECT DISTINCT service FROM tech_videos")]
-    anime_services = [record.service for record in await app.pool.fetch("SELECT DISTINCT service FROM anime_videos")]
-    misc_services = [record.service for record in await app.pool.fetch("SELECT DISTINCT service FROM misc_videos")]
-    watch_services = [record.service for record in await app.pool.fetch("SELECT DISTINCT service FROM to_watch")]
-    watched_services = [
-        record.service for record in await app.pool.fetch("SELECT DISTINCT service FROM watched_videos")
-    ]
+    for content_type in ContentType:
+        data[content_type.name] = [record.service for record in await app.pool.fetch("SELECT DISTINCT service FROM CONTENT where content_type = $1", content_type.value)]
 
-    data["music"] = music_services
-    data["tech"] = tech_services
-    data["anime"] = anime_services
-    data["misc"] = misc_services
-    data["watch"] = watch_services
-    data["watched"] = watched_services
+    data["any-video"] = [record.service for record in await app.pool.fetch("SELECT DISTINCT service FROM CONTENT")]
     return JSONResponse(content={"data": data})
 
-
-async def fetch_content(table_name: str, number: int, service: typing.Optional[str] = None):
-    query = f"SELECT * FROM {table_name}"
+async def fetch_content(
+    number: int, service: typing.Optional[str] = None, content_type: typing.Optional[ContentType] = None
+):
+    query = "SELECT * FROM CONTENT"
     params = []
 
-    if service:
-        query += " WHERE service = $1"
+    # content_type.value gets used cause number
+
+    if service and content_type:
+        query += " WHERE service = $1 AND chat_type = $2 ORDER BY RANDOM() LIMIT $3"
         params.append(service)
-        query += " ORDER BY RANDOM() LIMIT $2"
+        params.append(chat_type.value)
+
+    elif service and not content_type:
+        query += " WHERE service = $1 ORDER BY RANDOM() LIMIT $2"
+        params.append(service)
+
+    elif not service and content_type:
+        query += " WHERE chat_type = $1 ORDER BY RANDOM() LIMIT $2"
+        params.append(chat_type.value)
 
     else:
         query += " ORDER BY RANDOM() LIMIT $1"
@@ -91,25 +103,25 @@ async def fetch_content(table_name: str, number: int, service: typing.Optional[s
 
 @app.get("/music", response_model=typing.List[ContentResponse])
 async def music_content(number: typing.Optional[int] = Query(10, gt=0, le=500), service: typing.Optional[str] = None):
-    data = await fetch_content("music", number, service)
+    data = await fetch_content(number, service, ContentType.music)
     return JSONResponse(content={"data": data})
 
 
 @app.get("/tech", response_model=typing.List[ContentResponse])
 async def tech_content(number: typing.Optional[int] = Query(10, gt=0, le=500), service: typing.Optional[str] = None):
-    data = await fetch_content("tech_videos", number, service)
+    data = await fetch_content(number, service, ContentType.tech)
     return JSONResponse(content={"data": data})
 
 
 @app.get("/anime", response_model=typing.List[ContentResponse])
 async def anime_content(number: typing.Optional[int] = Query(10, gt=0, le=500), service: typing.Optional[str] = None):
-    data = await fetch_content("anime_videos", number, service)
+    data = await fetch_content(number, service, ContentType.anime)
     return JSONResponse(content={"data": data})
 
 
 @app.get("/misc", response_model=typing.List[ContentResponse])
 async def misc_content(number: typing.Optional[int] = Query(10, gt=0, le=500), service: typing.Optional[str] = None):
-    data = await fetch_content("misc_videos", number, service)
+    data = await fetch_content(number, service, ContentType.misc)
     return JSONResponse(content={"data": data})
 
 
@@ -117,13 +129,19 @@ async def misc_content(number: typing.Optional[int] = Query(10, gt=0, le=500), s
 async def to_watch_content(
     number: typing.Optional[int] = Query(10, gt=0, le=500), service: typing.Optional[str] = None
 ):
-    data = await fetch_content("to_watch", number, service)
+    data = await fetch_content(number, service, ContentType.watch)
     return JSONResponse(content={"data": data})
 
 
 @app.get("/watched", response_model=typing.List[ContentResponse])
 async def watched_content(number: typing.Optional[int] = Query(10, gt=0, le=500), service: typing.Optional[str] = None):
-    data = await fetch_content("watched_videos", number, service)
+    data = await fetch_content(number, service, ContentType.watched)
+    return JSONResponse(content={"data": data})
+
+
+@app.get("/any-video", response_model=typing.List[ContentResponse])
+async def any_video(number: typing.Optional[int] = Query(10, gt=0, le=500), service: typing.Optional[str] = None):
+    data = await fetch_content(number, service)
     return JSONResponse(content={"data": data})
 
 
