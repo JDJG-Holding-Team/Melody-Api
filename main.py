@@ -1,12 +1,13 @@
+import enum
+import os
 import typing
-from fastapi import FastAPI, Query, HTTPException
+from contextlib import asynccontextmanager
+
+import asyncpg
+from dotenv import load_dotenv
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
-import os
-import enum
-import asyncpg
-from contextlib import asynccontextmanager
-from dotenv import load_dotenv
 
 if not os.getenv("DB_KEY"):
     load_dotenv()
@@ -44,6 +45,7 @@ class ServiceListResponse(BaseModel):
     watched: typing.List[str]
     any_video: typing.List[str]
 
+
 class ContentType(enum.IntEnum):
     music = 0
     tech = 1
@@ -51,6 +53,7 @@ class ContentType(enum.IntEnum):
     misc = 3
     watch = 4
     watched = 5
+
 
 @app.get("/")
 async def root():
@@ -83,7 +86,9 @@ async def services():
     return JSONResponse(content={"data": data})
 
 
-async def fetch_content(number: int, service: typing.Optional[str] = None, content_type : typing.Optional[ContentType] = None):
+async def fetch_content(
+    number: int, service: typing.Optional[str] = None, content_type: typing.Optional[ContentType] = None
+):
     query = "SELECT * FROM CONTENT"
     params = []
 
@@ -141,6 +146,7 @@ async def to_watch_content(
 async def watched_content(number: typing.Optional[int] = Query(10, gt=0, le=500), service: typing.Optional[str] = None):
     data = await fetch_content(number, service, ContentType.watched)
     return JSONResponse(content={"data": data})
+
 
 @app.get("/any-video", response_model=typing.List[ContentResponse])
 async def any_video(number: typing.Optional[int] = Query(10, gt=0, le=500), service: typing.Optional[str] = None):
