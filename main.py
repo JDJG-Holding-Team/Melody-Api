@@ -63,28 +63,11 @@ async def root():
 @app.get("/services", response_model=ServiceListResponse)
 async def services():
     data = {}
-    music_services = [record.service for record in await app.pool.fetch("SELECT DISTINCT service FROM music")]
-    tech_services = [record.service for record in await app.pool.fetch("SELECT DISTINCT service FROM tech_videos")]
-    anime_services = [record.service for record in await app.pool.fetch("SELECT DISTINCT service FROM anime_videos")]
-    misc_services = [record.service for record in await app.pool.fetch("SELECT DISTINCT service FROM misc_videos")]
-    watch_services = [record.service for record in await app.pool.fetch("SELECT DISTINCT service FROM to_watch")]
-    watched_services = [
-        record.service for record in await app.pool.fetch("SELECT DISTINCT service FROM watched_videos")
-    ]
-    # turn these to all use the new content table.
+    for content_type in ContentType:
+        data[content_type.name] = [record.service for record in await app.pool.fetch("SELECT DISTINCT service FROM CONTENT where content_type = $1", content_type.value)]
 
-    rows = await app.pool.fetch("SELECT DISTINCT service, content_type FROM CONTENT")
-    # do something with this
-    # pass the content_type type to ContentType's enum.
-
-    data["music"] = music_services
-    data["tech"] = tech_services
-    data["anime"] = anime_services
-    data["misc"] = misc_services
-    data["watch"] = watch_services
-    data["watched"] = watched_services
+    data["any-video"] = [record.service for record in await app.pool.fetch("SELECT DISTINCT service FROM CONTENT")]
     return JSONResponse(content={"data": data})
-
 
 async def fetch_content(
     number: int, service: typing.Optional[str] = None, content_type: typing.Optional[ContentType] = None
