@@ -81,20 +81,18 @@ async def fetch_content(
     query = "SELECT * FROM CONTENT"
     params = []
 
-    # content_type.value gets used cause number
-
     if service and content_type is not None:
-        query += " WHERE service = $1 AND chat_type = $2 ORDER BY RANDOM() LIMIT $3"
+        query += " WHERE service = $1 AND content_type = $2 ORDER BY RANDOM() LIMIT $3"
         params.append(service)
-        params.append(chat_type.value)
+        params.append(content_type.value)
 
     elif service and content_type is None:
         query += " WHERE service = $1 ORDER BY RANDOM() LIMIT $2"
         params.append(service)
 
     elif not service and content_type is not None:
-        query += " WHERE chat_type = $1 ORDER BY RANDOM() LIMIT $2"
-        params.append(chat_type.value)
+        query += " WHERE content_type = $1 ORDER BY RANDOM() LIMIT $2"
+        params.append(content_type.value)
 
     else:
         query += " ORDER BY RANDOM() LIMIT $1"
