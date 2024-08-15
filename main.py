@@ -78,7 +78,7 @@ async def services():
 async def fetch_content(
     number: int, service: typing.Optional[str] = None, content_type: typing.Optional[ContentType] = None
 ):
-    query = "SELECT user_id, url, service"
+    query = "SELECT user_id, url, service FROM CONTENT"
     params = []
 
     if service and content_type is not None:
