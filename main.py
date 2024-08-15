@@ -64,10 +64,16 @@ async def root():
 async def services():
     data = {}
     for content_type in ContentType:
-        data[content_type.name] = [record.service for record in await app.pool.fetch("SELECT DISTINCT service FROM CONTENT where content_type = $1", content_type.value)]
+        data[content_type.name] = [
+            record.service
+            for record in await app.pool.fetch(
+                "SELECT DISTINCT service FROM CONTENT where content_type = $1", content_type.value
+            )
+        ]
 
     data["any-video"] = [record.service for record in await app.pool.fetch("SELECT DISTINCT service FROM CONTENT")]
     return JSONResponse(content={"data": data})
+
 
 async def fetch_content(
     number: int, service: typing.Optional[str] = None, content_type: typing.Optional[ContentType] = None
