@@ -44,6 +44,7 @@ class ServiceListResponse(BaseModel):
     watch: typing.List[str]
     watched: typing.List[str]
     any_video: typing.List[str]
+    politics: typing.List[str]
 
 
 class ContentType(enum.IntEnum):
@@ -53,7 +54,7 @@ class ContentType(enum.IntEnum):
     misc = 3
     watch = 4
     watched = 5
-
+    politics = 6
 
 @app.get("/")
 async def root():
@@ -140,6 +141,11 @@ async def to_watch_content(
 @app.get("/watched", response_model=typing.List[ContentResponse])
 async def watched_content(number: typing.Optional[int] = Query(10, gt=0, le=500), service: typing.Optional[str] = None):
     data = await fetch_content(number, service, ContentType.watched)
+    return JSONResponse(content={"data": data})
+
+@app.get("/politics", response_model=typing.List[ContentResponse])
+async def politics_content(number: typing.Optional[int] = Query(10, gt=0, le=500), service: typing.Optional[str] = None):
+    data = await fetch_content(number, service, ContentType.politics)
     return JSONResponse(content={"data": data})
 
 
