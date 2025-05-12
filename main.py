@@ -56,6 +56,7 @@ class ContentType(enum.IntEnum):
     watched = 5
     politics = 6
 
+
 @app.get("/")
 async def root():
     return JSONResponse(content={"message": "Welcome to the Melody API"})
@@ -143,8 +144,11 @@ async def watched_content(number: typing.Optional[int] = Query(10, gt=0, le=500)
     data = await fetch_content(number, service, ContentType.watched)
     return JSONResponse(content={"data": data})
 
+
 @app.get("/politics", response_model=typing.List[ContentResponse])
-async def politics_content(number: typing.Optional[int] = Query(10, gt=0, le=500), service: typing.Optional[str] = None):
+async def politics_content(
+    number: typing.Optional[int] = Query(10, gt=0, le=500), service: typing.Optional[str] = None
+):
     data = await fetch_content(number, service, ContentType.politics)
     return JSONResponse(content={"data": data})
 
