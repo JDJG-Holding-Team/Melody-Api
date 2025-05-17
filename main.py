@@ -55,6 +55,8 @@ class ContentType(enum.IntEnum):
     watch = 4
     watched = 5
     politics = 6
+    games = 7
+    horror = 8
 
 
 @app.get("/")
@@ -150,6 +152,20 @@ async def politics_content(
     number: typing.Optional[int] = Query(10, gt=0, le=500), service: typing.Optional[str] = None
 ):
     data = await fetch_content(number, service, ContentType.politics)
+    return JSONResponse(content={"data": data})
+
+@app.get("/horror", response_model=typing.List[ContentResponse])
+async def horror_content(
+    number: typing.Optional[int] = Query(10, gt=0, le=500), service: typing.Optional[str] = None
+):
+    data = await fetch_content(number, service, ContentType.horror)
+    return JSONResponse(content={"data": data})
+
+@app.get("/games", response_model=typing.List[ContentResponse])
+async def games_content(
+    number: typing.Optional[int] = Query(10, gt=0, le=500), service: typing.Optional[str] = None
+):
+    data = await fetch_content(number, service, ContentType.games)
     return JSONResponse(content={"data": data})
 
 
