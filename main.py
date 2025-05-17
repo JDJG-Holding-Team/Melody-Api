@@ -154,17 +154,15 @@ async def politics_content(
     data = await fetch_content(number, service, ContentType.politics)
     return JSONResponse(content={"data": data})
 
+
 @app.get("/horror", response_model=typing.List[ContentResponse])
-async def horror_content(
-    number: typing.Optional[int] = Query(10, gt=0, le=500), service: typing.Optional[str] = None
-):
+async def horror_content(number: typing.Optional[int] = Query(10, gt=0, le=500), service: typing.Optional[str] = None):
     data = await fetch_content(number, service, ContentType.horror)
     return JSONResponse(content={"data": data})
 
+
 @app.get("/games", response_model=typing.List[ContentResponse])
-async def games_content(
-    number: typing.Optional[int] = Query(10, gt=0, le=500), service: typing.Optional[str] = None
-):
+async def games_content(number: typing.Optional[int] = Query(10, gt=0, le=500), service: typing.Optional[str] = None):
     data = await fetch_content(number, service, ContentType.games)
     return JSONResponse(content={"data": data})
 
